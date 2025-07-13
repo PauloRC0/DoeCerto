@@ -28,4 +28,9 @@ class Ong extends Model
     ];
 
     public $timestamps = true;
+
+    public function ongProfile()
+    {
+        return $this->hasOne(OngProfile::class);
+    }
 }
