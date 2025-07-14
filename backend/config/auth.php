@@ -40,6 +40,16 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'ongs',
+        ],
+
+        'ong' => [
+            'driver' => 'sanctum',
+            'provider' => 'ongs',
+        ],
     ],
 
     /*
@@ -65,9 +75,14 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
+        'ongs' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Ong::class,
+        ],
+
         // 'users' => [
         //     'driver' => 'database',
-        //     'table' => 'users',
+        //     // 'table' => 'users',
         // ],
     ],
 
@@ -93,6 +108,12 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'ongs' => [
+            'provider' => 'ongs',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,
