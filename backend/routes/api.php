@@ -5,6 +5,7 @@ use App\Http\Controllers\DonorController;
 use App\Http\Controllers\Auth\DonorAuthController;
 use App\Http\Controllers\OngController;
 use App\Http\Controllers\Auth\OngAuthController;
+use App\Http\Controllers\OngProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::apiResource('donors', DonorController::class);
@@ -22,6 +23,8 @@ Route::prefix('/auth/ong')->group(function () {
    Route::post('/login', [OngAuthController::class, 'login']);
    Route::post('/logout', [OngAuthController::class, 'logout']);
 });
+
+Route::middleware('auth:sanctum')->post('/ong/profile', [OngProfileController::class, 'store']);
 
 
 
