@@ -9,7 +9,11 @@ import { loginSchema, type LoginSchema } from "@/lib";
 import AuthService from "@/lib/auth";
 import styles from "./forms.module.css";
 
-export default function LoginForm() {
+interface LoginFormProps {
+  userType: "donor" | "ong";
+}
+
+export default function LoginForm({ userType }: LoginFormProps) {
   const router = useRouter();
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -23,17 +27,31 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginSchema) => {
     try {
-      const res = await AuthService.login({
-        don_email: data.email,
-        don_password: data.password,
-      });
-
-      setAuthError(null);
-
-      router.push("/Homedonor");
+      if (userType === "donor") {
+        await AuthService.login(
+          {
+            don_email: data.email,
+            don_password: data.password,
+          },
+          "donor"
+        );
+        setAuthError(null);
+        router.push("/Homedonor");
+      } else {
+        // ong
+        await AuthService.login(
+          {
+            ong_email: data.email,
+            ong_password: data.password,
+          },
+          "ong"
+        );
+        setAuthError(null);
+        router.push("/Home");
+      }
     } catch (error: any) {
       const msg =
-        error === "The provided credentials are incorrect."
+        error?.response?.data?.error === "The provided credentials are incorrect."
           ? "Credenciais inválidas. Verifique seu email e senha."
           : "Erro inesperado ao fazer login.";
       setAuthError(msg);
@@ -41,11 +59,7 @@ export default function LoginForm() {
   };
 
   return (
-    <form
-      className={styles.loginForm}
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-    >
+    <form className={styles.loginForm} onSubmit={handleSubmit(onSubmit)} noValidate>
       {authError && <p className={styles.authError}>{authError}</p>}
 
       <Input
@@ -66,11 +80,7 @@ export default function LoginForm() {
       />
 
       <div className={styles.checkboxAndLinkWrapper}>
-        <Checkbox
-          label="Lembrar-me"
-          id="remember-me"
-          {...register("rememberMe")}
-        />
+        <Checkbox label="Lembrar-me" id="remember-me" {...register("rememberMe")} />
         <a className={styles.forgotPasswordLink} href="#">
           Esqueceu sua senha?
         </a>
