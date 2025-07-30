@@ -18,7 +18,6 @@ export default function LoginCard() {
   };
 
   const handleBack = () => {
-    console.log("handleBack chamado: voltando para painel inicial");
     setPanelState("initial");
   };
 
@@ -36,7 +35,8 @@ export default function LoginCard() {
           >
             <div className={styles.panelContent}>
               <h1 className={styles.loginTitle}>Entrar Agora</h1>
-              <LoginForm />
+              {/* Passa o selectedUser para LoginForm */}
+              <LoginForm userType={selectedUser} />
             </div>
           </motion.div>
         )}
@@ -64,10 +64,7 @@ export default function LoginCard() {
                 Cadastre-se como ONG ou Doador!
               </p>
 
-              <ToggleUser
-                selected={selectedUser}
-                setSelected={setSelectedUser}
-              />
+              <ToggleUser selected={selectedUser} setSelected={setSelectedUser} />
 
               <p className={styles.signupToggleMessage}>
                 {selectedUser === "donor"
@@ -122,9 +119,7 @@ export default function LoginCard() {
           >
             <div className={styles.panelContent}>
               <h1 className={styles.loginTitle}>
-                {panelState === "signup-donor"
-                  ? "Cadastro Doador"
-                  : "Cadastro ONG"}
+                {panelState === "signup-donor" ? "Cadastro Doador" : "Cadastro ONG"}
               </h1>
               {panelState === "signup-donor" ? (
                 <SignupDonorForm onSuccess={handleBack} />
