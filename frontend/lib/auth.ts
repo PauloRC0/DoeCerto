@@ -1,7 +1,7 @@
 // frontend/lib/auth.ts
 import axios, { AxiosRequestConfig } from "axios";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "http://127.0.0.1:8000/api";
 const TOKEN_KEY = "token";
 
 class AuthService {
@@ -19,12 +19,13 @@ class AuthService {
     },
   });
 
-  // Middleware de injeção de token dinâmico
+  // Middleware para injetar token dinâmico no header
   private static getAuthHeaders() {
     const token = this.token;
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
+  // Método genérico para requisições protegidas
   public static async request<T = any>(
     endpoint: string,
     options: AxiosRequestConfig = {}
@@ -46,12 +47,20 @@ class AuthService {
     }
   }
 
-  public static async login(form: { don_email: string; don_password: string }) {
+  // Login para donor ou ong
+  public static async login(
+    form:
+      | { don_email: string; don_password: string }
+      | { ong_email: string; ong_password: string },
+    userType: "donor" | "ong" = "donor"
+  ) {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/auth/donor/login`,
-        form
-      );
+      const url =
+        userType === "donor"
+          ? "/auth/donor/login"
+          : "/auth/ong/login";
+
+      const response = await this.api.post(url, form);
       const { token } = response.data;
 
       if (typeof window !== "undefined") {
@@ -65,13 +74,19 @@ class AuthService {
     }
   }
 
-  public static async logout() {
+  // Logout (chama API e remove token local)
+  public static async logout(userType: "donor" | "ong" = "donor") {
     const token = this.token;
 
     if (!token) return;
 
     try {
-      await axios.post(`${API_BASE_URL}/api/auth/donor/logout`, null, {
+      const url =
+        userType === "donor"
+          ? "/auth/donor/logout"
+          : "/auth/ong/logout";
+
+      await this.api.post(url, null, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
