@@ -1,4 +1,4 @@
-export type UserType = "donor" | "ngo";
+export type UserType = "donor" | "ong";
 
 export type ToggleUserProps = {
   selected: UserType;
