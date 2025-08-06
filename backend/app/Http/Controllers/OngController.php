@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ong;
+use App\Models\Donor; 
 use App\Services\CnpjValidatorService;
-use App\Services\NominatimService; 
+use App\Services\NominatimService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Facades\Http;
 
 class OngController extends Controller
 {
     protected $nominatimService;
 
-    
     public function __construct(NominatimService $nominatimService)
     {
         $this->nominatimService = $nominatimService;
@@ -40,7 +40,6 @@ class OngController extends Controller
         }
 
         if (!empty($validated['ong_cep'])) {
-           
             $coords = $this->nominatimService->getCoordinatesFromCep($validated['ong_cep']);
             if ($coords) {
                 $validated['ong_latitude'] = $coords['lat'];
@@ -83,7 +82,6 @@ class OngController extends Controller
         }
 
         if (isset($validated['ong_cep']) && $validated['ong_cep'] !== $ong->ong_cep) {
-            
             $coords = $this->nominatimService->getCoordinatesFromCep($validated['ong_cep']);
             if ($coords) {
                 $validated['ong_latitude'] = $coords['lat'];
@@ -103,5 +101,92 @@ class OngController extends Controller
     {
         $ong->delete();
         return response()->json(null, 204);
+    }
+
+    public function listarOngsPorProximidade(Request $request)
+    {
+        $request->validate([
+            'cep' => 'nullable|string|max:10',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'donor_id' => 'nullable|exists:donors,id', // Novo campo: ID do doador
+            'radius' => 'nullable|numeric|min:1|max:500',
+        ]);
+
+        $targetLat = null;
+        $targetLon = null;
+
+        // Prioriza o ID do doador se fornecido
+        if ($request->has('donor_id')) {
+            $donor = Donor::find($request->input('donor_id'));
+            if ($donor && $donor->don_latitude && $donor->don_longitude) {
+                $targetLat = (float) $donor->don_latitude;
+                $targetLon = (float) $donor->don_longitude;
+            } else {
+                return response()->json(['message' => 'Doador não encontrado ou sem coordenadas registradas.'], 404);
+            }
+        }
+        // Se não, prioriza latitude e longitude se fornecidas
+        elseif ($request->has('latitude') && $request->has('longitude')) {
+            $targetLat = (float) $request->input('latitude');
+            $targetLon = (float) $request->input('longitude');
+        }
+        // Se não, tenta usar o CEP
+        elseif ($request->has('cep')) {
+            $targetCep = $request->input('cep');
+            $targetCoords = $this->nominatimService->getCoordinatesFromCep($targetCep);
+            if ($targetCoords) {
+                $targetLat = (float) $targetCoords['lat'];
+                $targetLon = (float) $targetCoords['lon'];
+            }
+        }
+
+        if (is_null($targetLat) || is_null($targetLon)) {
+            return response()->json(['message' => 'Não foi possível determinar as coordenadas de origem. Forneça um CEP válido, latitude e longitude, ou um ID de doador com coordenadas.'], 400);
+        }
+
+        $radius = $request->input('radius', 50);
+
+        $ongs = Ong::whereNotNull('ong_latitude')
+                    ->whereNotNull('ong_longitude')
+                    ->get();
+
+        $nearbyOngs = [];
+
+        foreach ($ongs as $ong) {
+            $ongLat = (float) $ong->ong_latitude;
+            $ongLon = (float) $ong->ong_longitude;
+
+            $distance = $this->haversineGreatCircleDistance(
+                $targetLat, $targetLon, $ongLat, $ongLon
+            );
+
+            if ($distance <= $radius) {
+                $ong->distance = round($distance, 2);
+                $nearbyOngs[] = $ong;
+            }
+        }
+
+        usort($nearbyOngs, function ($a, $b) {
+            return $a->distance <=> $b->distance;
+        });
+
+        return response()->json($nearbyOngs);
+    }
+
+    private function haversineGreatCircleDistance(
+        float $latitudeFrom, float $longitudeFrom, float $latitudeTo, float $longitudeTo, int $earthRadius = 6371000
+    ): float {
+        $latFrom = deg2rad($latitudeFrom);
+        $lonFrom = deg2rad($longitudeFrom);
+        $latTo = deg2rad($latitudeTo);
+        $lonTo = deg2rad($longitudeTo);
+
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
+
+        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+        return ($angle * $earthRadius) / 1000;
     }
 }
