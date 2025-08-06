@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('ong_email')->unique();
             $table->string('ong_password');
             $table->string('ong_cnpj');
+            $table->string('ong_cep')->nullable();
+            $table->decimal('ong_latitude', 10, 8)->nullable();
+            $table->decimal('ong_longitude', 10, 8)->nullable();
             $table->timestamps();
         });
     }

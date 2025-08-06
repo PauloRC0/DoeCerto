@@ -23,6 +23,8 @@ class Donor extends Authenticatable
         'don_image',
         'don_phone',
         'don_cep',
+        'don_latitude',
+        'don_longitude',
         'don_houseNumber',
         'don_complement',
     ];

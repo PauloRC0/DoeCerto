@@ -17,6 +17,8 @@ Route::prefix('/auth/donor')->group(function () {
    Route::post('/logout', [DonorAuthController::class, 'logout']); 
 });
 
+Route::get('/ongs/proximidade', [OngController::class, 'listarOngsPorProximidade']);
+
 Route::apiResource('ongs', OngController::class);
 
 Route::prefix('/auth/ong')->group(function () {
@@ -32,6 +34,8 @@ Route::get('donations/ong/{ongId}', [DonationController::class, 'byOng']);
 Route::middleware('auth:sanctum')->get('/auth/donor/me', function (Request $request) {
    return response()->json($request->user());
 });
+
+
 
 
 

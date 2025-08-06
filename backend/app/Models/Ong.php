@@ -21,6 +21,9 @@ class Ong extends Model
         'ong_email',
         'ong_password',
         'ong_cnpj',
+        'ong_cep',
+        'ong_latitude',
+        'ong_longitude',
         'ong_image',
     ];
 

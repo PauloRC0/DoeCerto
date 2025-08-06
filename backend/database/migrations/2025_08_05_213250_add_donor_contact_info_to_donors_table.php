@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::table('donors', function (Blueprint $table) {
             $table->string('don_phone')->nullable();
             $table->string('don_cep')->nullable();
+            $table->decimal('don_latitude', 10, 8)->nullable();
+            $table->decimal('don_longitude', 10, 8)->nullable();
             $table->string('don_houseNumber')->nullable();
             $table->string('don_complement')->nullable();
         });
@@ -28,6 +30,8 @@ return new class extends Migration
             $table->dropColumn([
                 'don_phone',
                 'don_cep',
+                'don_latitude',
+                'don_longitude',
                 'don_houseNumber',
                 'don_complement',
             ]);
