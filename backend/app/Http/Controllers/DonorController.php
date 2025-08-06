@@ -5,10 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Donor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-
+use App\Services\NominatimService;
 
 class DonorController extends Controller
 {
+    protected $nominatim;
+
+    public function __construct(NominatimService $nominatim)
+    {
+        $this->nominatim = $nominatim;
+    }
+
     public function index()
     {
         return Donor::all();
@@ -34,11 +41,18 @@ class DonorController extends Controller
             $data['don_image'] = $path;
         }
 
+        if (!empty($data['don_cep'])) {
+            $coords = $this->nominatim->getCoordinatesFromCep($data['don_cep']);
+            if ($coords) {
+                $data['don_latitude'] = $coords['lat'];
+                $data['don_longitude'] = $coords['lon'];
+            }
+        }
+
         $data['don_password'] = bcrypt($data['don_password']);
 
         return Donor::create($data);
     }
-
 
     public function show($id)
     {
@@ -65,21 +79,26 @@ class DonorController extends Controller
             if ($donor->don_image && Storage::disk('public')->exists($donor->don_image)) {
                 Storage::disk('public')->delete($donor->don_image);
             }
-
             $image = $request->file('don_image');
             $path = $image->store('Donor', 'public');
             $data['don_image'] = $path;
+        }
+
+        if (!empty($data['don_cep'])) {
+            $coords = $this->nominatim->getCoordinatesFromCep($data['don_cep']);
+            if ($coords) {
+                $data['don_latitude'] = $coords['lat'];
+                $data['don_longitude'] = $coords['lon'];
+            }
         }
 
         if (isset($data['don_password'])) {
             $data['don_password'] = bcrypt($data['don_password']);
         }
 
-    $donor->update($data);
-    return $donor;
-}
-
-
+        $donor->update($data);
+        return $donor;
+    }
 
     public function destroy($id)
     {
