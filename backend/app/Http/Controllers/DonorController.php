@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Donor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
 
 class DonorController extends Controller
 {
@@ -60,8 +62,8 @@ class DonorController extends Controller
         ]);
 
         if ($request->hasFile('don_image')) {
-            if ($donor->don_image && \Storage::disk('public')->exists($donor->don_image)) {
-                \Storage::disk('public')->delete($donor->don_image);
+            if ($donor->don_image && Storage::disk('public')->exists($donor->don_image)) {
+                Storage::disk('public')->delete($donor->don_image);
             }
 
             $image = $request->file('don_image');
